@@ -7,6 +7,7 @@ from floris.tools.floris_interface import FlorisInterface
 from GraphFloris.config import EXAMPLE_FARM
 from GraphFloris.gen_graph import get_node_only_graph, update_edges
 from GraphFloris.layout_sampling import sequential_sampling
+from GraphFloris.visualize import visualize_wind_farm
 
 
 class WindFarm:
@@ -31,10 +32,16 @@ class WindFarm:
 
         self.xs = None  # will be determined
         self.ys = None  # will be determined
+        self.wind_speed = None  # free flow wind speed (m/sec)
+        self.wind_direction = None  # direction of wind (degree)
+        # comments on wind direction
+        # 0 (360) = North -> South
+        # 90 = East -> West
+        # 180 = South -> North
+        # 270 = West -> East
 
         self.sample_layout(num_turbines, x_grid_size, y_grid_size)
         self.g = get_node_only_graph(self.xs, self.ys)
-        self._built = False
 
     def sample_layout(self,
                       num_turbines: int,
@@ -49,7 +56,6 @@ class WindFarm:
                                                num_turbines=num_turbines)
         self._farm.reinitialize_flow_field(layout_array=[self.xs, self.ys])
         self.num_turbines = num_turbines
-        self._built = False
 
     def set_power(self, g, wind_speed: float, wind_direction: float):
         # prepare normalizer
@@ -85,7 +91,8 @@ class WindFarm:
         if wind_speed is not None:
             self.set_power(self.g, wind_speed, wind_direction)
 
-        self._built = True
+        self.wind_speed = wind_speed
+        self.wind_direction = wind_direction
 
     def observe(self):
         pass
@@ -100,6 +107,17 @@ class WindFarm:
             self.min_distance = min_distance_factor * self.turbine_diameter
         if dist_cutoff_factor is not None:
             self.cutoff_dist = dist_cutoff_factor * self.turbine_diameter
+
+    def visualize_farm(self, **viz_kwargs):
+        assert self.g is not None, "construct graph first! you can construct wind farm graph with 'update_graph'"
+        visualize_wind_farm(g=self.g,
+                            min_distance=self.min_distance,
+                            angle_threshold=self.angle_threshold,
+                            wind_direction=self.wind_direction,
+                            wind_speed=self.wind_speed,
+                            x_grid_size=self.x_grid_size,
+                            y_grid_size=self.y_grid_size,
+                            **viz_kwargs)
 
 
 if __name__ == '__main__':

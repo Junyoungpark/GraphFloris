@@ -21,18 +21,15 @@ def visualize_wind_farm(g: dgl.DGLGraph,
                         arrow_size=0.01,
                         viz_eps=0.02,
                         dpi=250,
-                        return_fig=False,
                         label_size=15,
                         tick_size=12,
                         annotation_size=12,
                         show_color_bar_label=False,
-                        title_size=20,
-                        show_title=False,
-                        edge_width=8,
+                        edge_width=2.0,
                         legend_size=15):
     # Figure drawing parameters
-    influential_region_zorder = 0
-    min_distance_region_zorder = 1
+    influential_region_zorder = -1
+    min_distance_region_zorder = 0
     edge_zorder = 2
     turbine_zorder = 3
 
@@ -77,6 +74,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
     nx.draw_networkx_edges(nxg,
                            edge_color='grey',
                            ax=ax,
+                           width=edge_width,
                            pos=pos_dict)
 
     ax.set_xlabel("Wind farm X size (m)", fontsize=label_size)
@@ -113,8 +111,9 @@ def visualize_wind_farm(g: dgl.DGLGraph,
         # Add influential cones
         wedge = Wedge(
             (x, y),
-            np.sqrt(x_grid_size**2 + y_grid_size**2),  # radius
-            270 - wind_direction - angle_threshold,  # from theta 1 (in degrees) # FLORIS 1.4 measures 270 degree as left
+            np.sqrt(x_grid_size ** 2 + y_grid_size ** 2),  # radius
+            270 - wind_direction - angle_threshold,
+            # from theta 1 (in degrees) # FLORIS 1.4 measures 270 degree as left
             270 - wind_direction + angle_threshold,  # to theta 2 (in degrees)
             color='g', alpha=0.05,
             zorder=influential_region_zorder)
@@ -171,7 +170,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
     ax.add_line(n2w)
 
     # draw wind direction arrow
-    wind_dir_rad = np.radians(wind_direction-270)
+    wind_dir_rad = np.radians(wind_direction - 270)
     sin = np.sin(wind_dir_rad)
     cos = np.cos(wind_dir_rad)
     wind_start_x = dir_mark_center_x - marker_len * cos  # tail
@@ -201,7 +200,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
     ax.legend(handles, labels, prop={'size': legend_size})
 
 # if show_title:
-    #     fig.suptitle('Wind Farm Layout', fontsize=title_size)
-    #
-    # if return_fig:
-    #     return fig, ax
+#     fig.suptitle('Wind Farm Layout', fontsize=title_size)
+#
+# if return_fig:
+#     return fig, ax
