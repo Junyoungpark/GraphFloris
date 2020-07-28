@@ -1,3 +1,6 @@
+# Original author: FlORIS
+# https://github.com/NREL/floris/blob/master/examples/example_input.json
+
 EXAMPLE_FARM = {'type': 'floris_input',
                 'name': 'floris_input_file_Example',
                 'description': 'Example FLORIS Input file',

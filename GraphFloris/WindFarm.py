@@ -48,16 +48,19 @@ class WindFarm:
                                                min_dist=self.min_distance,
                                                num_turbines=num_turbines)
         self._farm.reinitialize_flow_field(layout_array=[self.xs, self.ys])
+        self.num_turbines = num_turbines
         self._built = False
 
-    def set_power(self, g, wind_speed: float):
+    def set_power(self, g, wind_speed: float, wind_direction: float):
         # prepare normalizer
-        self._one_turbine_farm.reinitialize_flow_field(wind_speed=wind_speed)
+        self._one_turbine_farm.reinitialize_flow_field(wind_speed=wind_speed,
+                                                       wind_direction=wind_direction)
         self._one_turbine_farm.calculate_wake()
         one_farm_power = self._one_turbine_farm.get_farm_power()  # scalar
 
         # compute wind turbine powers
-        self._farm.reinitialize_flow_field(wind_speed=wind_speed)
+        self._farm.reinitialize_flow_field(wind_speed=wind_speed,
+                                           wind_direction=wind_direction)
         self._farm.calculate_wake()
         powers = self._farm.get_turbine_power()
         norm_powers = np.array(powers) / one_farm_power
@@ -67,21 +70,38 @@ class WindFarm:
                      wind_speed: float,
                      wind_direction: float,
                      xs: List[float] = None,
-                     ys: List[float] = None):
+                     ys: List[float] = None,
+                     angle_threshold: float = None,
+                     dist_cutoff_factor: float = None):
         # update graph
         if xs is not None and ys is not None:  # construct graph
             self.g = get_node_only_graph(xs, ys)
+            self.xs, self.ys = xs, ys
+            self.num_turbines = len(xs)
         if wind_direction is not None:
-            update_edges(self.g, wind_direction, self.angle_threshold, self.cutoff_dist)
+            ag_th = self.angle_threshold if angle_threshold is None else angle_threshold
+            cutoff_dist = self.cutoff_dist if dist_cutoff_factor is None else dist_cutoff_factor * self.turbine_diameter
+            update_edges(self.g, wind_direction, ag_th, cutoff_dist)
         if wind_speed is not None:
-            self.set_power(self.g, wind_speed)
+            self.set_power(self.g, wind_speed, wind_direction)
 
         self._built = True
 
     def observe(self):
         pass
 
+    def update_config(self,
+                      angle_threshold: float = None,
+                      min_distance_factor: float = None,
+                      dist_cutoff_factor: float = None):
+        if angle_threshold is not None:
+            self.angle_threshold = angle_threshold
+        if min_distance_factor is not None:
+            self.min_distance = min_distance_factor * self.turbine_diameter
+        if dist_cutoff_factor is not None:
+            self.cutoff_dist = dist_cutoff_factor * self.turbine_diameter
+
 
 if __name__ == '__main__':
     farm = WindFarm(10, 3000, 3000)
-    farm.update_graph(12, 0)
+    farm.update_graph(12, 90)

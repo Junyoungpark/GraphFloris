@@ -1,10 +1,12 @@
 import dgl
 import matplotlib
 import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
+import torch
 from matplotlib import cm
 from matplotlib.lines import Line2D
-from matplotlib.patches import Wedge, FancyArrow
+from matplotlib.patches import Wedge
 
 
 def visualize_wind_farm(g: dgl.DGLGraph,
@@ -28,6 +30,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
                         show_title=False,
                         edge_width=8,
                         legend_size=15):
+    # Figure drawing parameters
     influential_region_zorder = 0
     min_distance_region_zorder = 1
     edge_zorder = 2
@@ -37,9 +40,6 @@ def visualize_wind_farm(g: dgl.DGLGraph,
     scatter_ball_size = 200
     x_limit = x_grid_size
     y_limit = y_grid_size
-
-    # fig = plt.figure(figsize=(12, 10), dpi=dpi)
-    # ax = fig.add_subplot(111)
 
     fig, (ax, ax_colorbar) = plt.subplots(1, 2,
                                           figsize=(10.5, 10),
@@ -55,10 +55,11 @@ def visualize_wind_farm(g: dgl.DGLGraph,
     ax.set_ylim([-y_limit * viz_eps, y_limit * (1 + viz_eps)])
     ax.tick_params(labelsize=tick_size)
 
+    # Draw turbines color-coded with powers
+    x, y = g.ndata['x'], g.ndata['y']
     cmap = matplotlib.cm.Blues
     norm = matplotlib.colors.Normalize(vmin=0.0, vmax=1.0)
-
-    turbine_scatter = ax.scatter(g.ndata['x'], g.ndata['y'],
+    turbine_scatter = ax.scatter(x, y,
                                  label='Turbine',
                                  cmap=cmap,
                                  c=norm(g.ndata['power']),
@@ -66,6 +67,17 @@ def visualize_wind_farm(g: dgl.DGLGraph,
                                  linewidths=scatter_line_width,
                                  s=scatter_ball_size,
                                  zorder=turbine_zorder)
+
+    # Draw interaction edges
+    xys = torch.cat([x, y], dim=-1).squeeze().numpy()
+    pos_dict = {}
+    for i, xy in enumerate(xys):
+        pos_dict[i] = xy
+    nxg = dgl.to_networkx(g)
+    nx.draw_networkx_edges(nxg,
+                           edge_color='grey',
+                           ax=ax,
+                           pos=pos_dict)
 
     ax.set_xlabel("Wind farm X size (m)", fontsize=label_size)
     ax.set_ylabel("Wind farm Y size (m)", fontsize=label_size)
@@ -101,9 +113,9 @@ def visualize_wind_farm(g: dgl.DGLGraph,
         # Add influential cones
         wedge = Wedge(
             (x, y),
-            min_distance * 100,  # radius
-            90-wind_direction - angle_threshold,  # from theta 1 (in degrees)
-            90-wind_direction + angle_threshold,  # to theta 2 (in degrees)
+            np.sqrt(x_grid_size**2 + y_grid_size**2),  # radius
+            270 - wind_direction - angle_threshold,  # from theta 1 (in degrees) # FLORIS 1.4 measures 270 degree as left
+            270 - wind_direction + angle_threshold,  # to theta 2 (in degrees)
             color='g', alpha=0.05,
             zorder=influential_region_zorder)
         ax.add_patch(wedge)
@@ -159,7 +171,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
     ax.add_line(n2w)
 
     # draw wind direction arrow
-    wind_dir_rad = np.radians(wind_direction)
+    wind_dir_rad = np.radians(wind_direction-270)
     sin = np.sin(wind_dir_rad)
     cos = np.cos(wind_dir_rad)
     wind_start_x = dir_mark_center_x - marker_len * cos  # tail
@@ -188,44 +200,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
     labels += ["influential region", "min. distance"]
     ax.legend(handles, labels, prop={'size': legend_size})
 
-    # # Draw interaction graph
-    # margin_r = 15
-    # edges = []
-    # for sender in self.nodeHelpers:
-    #     sx = sender.x
-    #     sy = sender.y
-    #     for receiver in sender.interactions:
-    #         rx = receiver.x
-    #         ry = receiver.y
-    #
-    #         # Adjust sender, receiver position for better visualization
-    #         # to have marin amount of r
-    #         dx = rx - sx
-    #         dy = ry - sy
-    #
-    #         adj_sx = margin_r * dx / np.sqrt(dx * dx + dy * dy)
-    #         adj_sy = margin_r * dy / np.sqrt(dx * dx + dy * dy)
-    #         adj_sx = sx + adj_sx
-    #         adj_sy = sy + adj_sy
-    #
-    #         adj_rx = margin_r * dx / np.sqrt(dx * dx + dy * dy)
-    #         adj_ry = margin_r * dy / np.sqrt(dx * dx + dy * dy)
-    #         adj_rx = rx - adj_rx
-    #         adj_ry = ry - adj_ry
-    #
-    #         adj_dx = adj_rx - adj_sx
-    #         adj_dy = adj_ry - adj_sy
-    #
-    #         edge = FancyArrow(adj_sx, adj_sy,
-    #                           adj_dx, adj_dy,
-    #                           length_includes_head=True,
-    #                           width=edge_width,
-    #                           color='#bbbbbb',  # #bbbbbb
-    #                           zorder=edge_zorder)
-    #         ax.add_patch(edge)
-    #         edges.append(edge)
-    #
-    # if show_title:
+# if show_title:
     #     fig.suptitle('Wind Farm Layout', fontsize=title_size)
     #
     # if return_fig:
