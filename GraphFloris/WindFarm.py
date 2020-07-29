@@ -42,8 +42,8 @@ class WindFarm:
         # 180 = South -> North
         # 270 = West -> East
 
+        self.g = None
         self.sample_layout(num_turbines, x_grid_size, y_grid_size)
-        self.g = get_node_only_graph(self.xs, self.ys)
 
     def sample_layout(self,
                       num_turbines: int,
@@ -58,6 +58,7 @@ class WindFarm:
                                                num_turbines=num_turbines)
         self._farm.reinitialize_flow_field(layout_array=[self.xs, self.ys])
         self.num_turbines = num_turbines
+        self.g = get_node_only_graph(self.xs, self.ys)
 
     def set_power(self, g, wind_speed: float, wind_direction: float):
         # prepare normalizer
@@ -151,7 +152,8 @@ class WindFarm:
 
 
 if __name__ == '__main__':
-    farm = WindFarm(10, 3000, 3000)
+    farm = WindFarm(1, 3000, 3000)
+    farm.sample_layout(10)
     farm.update_graph(12, 90)
     g, u = farm.observe()
 
