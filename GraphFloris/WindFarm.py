@@ -1,5 +1,6 @@
 from typing import List
 
+import dgl
 import numpy as np
 import torch
 from floris.tools.floris_interface import FlorisInterface
@@ -96,7 +97,35 @@ class WindFarm:
         self.wind_direction = wind_direction
 
     def observe(self):
-        pass
+        g = dgl.DGLGraph(self.g)  # copy structure of wind farm DGLGraph
+
+        # setup internal node features and edge features
+        for k in self.g.ndata.keys():
+            g.ndata[k] = self.g.ndata[k]
+
+        for k in self.g.edata.keys():
+            g.edata[k] = self.g.edata[k]
+
+        # setup features for regression models
+        # this selection of node and edge features was investigated in the paper
+        # 'Physics-Induced Graph Neural Network: An Application to wind-farm power prediction'
+        # https://www.sciencedirect.com/science/article/pii/S0360544219315555
+
+        # node feature
+        n = g.number_of_nodes()
+        g.ndata['feat'] = torch.ones(n, 1) * self.wind_speed
+
+        # edge feature
+        ef = torch.cat([g.edata['down_stream_dist'], g.edata['radial_dist']], dim=-1)
+        g.edata['feat'] = ef
+
+        # global feature
+        u = torch.ones(1, 1) * self.wind_speed
+
+        # regression target (usually simulated power of turbines) are already assigned to the graph
+        # g.ndata['power']
+
+        return g, u
 
     def update_config(self,
                       angle_threshold: float = None,
@@ -124,3 +153,6 @@ class WindFarm:
 if __name__ == '__main__':
     farm = WindFarm(10, 3000, 3000)
     farm.update_graph(12, 90)
+    g, u = farm.observe()
+
+    print(g, u)
