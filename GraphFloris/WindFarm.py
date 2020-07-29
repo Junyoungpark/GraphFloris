@@ -52,6 +52,7 @@ class WindFarm:
         num_turbines = self.num_turbines if num_turbines is None else num_turbines
         x_grid_size = self.x_grid_size if x_grid_size is None else x_grid_size
         y_grid_size = self.y_grid_size if y_grid_size is None else y_grid_size
+
         self.xs, self.ys = sequential_sampling(x_grid_size=x_grid_size,
                                                y_grid_size=y_grid_size,
                                                min_dist=self.min_distance,
@@ -152,7 +153,7 @@ class WindFarm:
 
 
 if __name__ == '__main__':
-    farm = WindFarm(1, 3000, 3000)
+    farm = WindFarm(5, 5000, 5000)
     farm.sample_layout(10)
     farm.update_graph(12, 90)
     g, u = farm.observe()
