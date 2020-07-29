@@ -9,3 +9,8 @@ for computing power generation of each wind turbines. Details of graph formulati
 3. networkx
 4. matplotlib
 5. pytorch
+
+## Installation
+```bash
+pip install GraphFloris 
+```
