@@ -14,11 +14,11 @@ class WindFarm:
 
     def __init__(self,
                  num_turbines: int,
-                 x_grid_size: float,
-                 y_grid_size: float,
-                 angle_threshold: float = 90.0,
-                 min_distance_factor: float = 5.0,
-                 dist_cutoff_factor: float = 50.0):
+                 x_grid_size: float = 3000,  # the x size of windfarm is by default 3000m
+                 y_grid_size: float = 3000,  # the y size of windfarm is by default 3000m
+                 angle_threshold: float = 90.0,  # the angle threshold (degree)
+                 min_distance_factor: float = 5.0,  # minimal safety distance factor between two turbines
+                 dist_cutoff_factor: float = 50.0):  # maximal influential distance factor between two turbines
         self.num_turbines = num_turbines
         self.x_grid_size = x_grid_size
         self.y_grid_size = y_grid_size
@@ -34,6 +34,7 @@ class WindFarm:
         self.ys = None  # will be determined
         self.wind_speed = None  # free flow wind speed (m/sec)
         self.wind_direction = None  # direction of wind (degree)
+
         # comments on wind direction
         # 0 (360) = North -> South
         # 90 = East -> West
