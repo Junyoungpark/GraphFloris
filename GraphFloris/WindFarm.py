@@ -1,6 +1,7 @@
 from typing import List
 
 import dgl
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from floris.tools.floris_interface import FlorisInterface
@@ -18,7 +19,7 @@ class WindFarm:
                  x_grid_size: float = 3000,  # the x size of windfarm is by default 3000m
                  y_grid_size: float = 3000,  # the y size of windfarm is by default 3000m
                  angle_threshold: float = 90.0,  # the angle threshold (degree)
-                 min_distance_factor: float = 5.0,  # minimal safety distance factor between two turbines
+                 min_distance_factor: float = 2.0,  # minimal safety distance factor between two turbines
                  dist_cutoff_factor: float = 50.0):  # maximal influential distance factor between two turbines
         self.num_turbines = num_turbines
         self.x_grid_size = x_grid_size
@@ -150,12 +151,13 @@ class WindFarm:
                             x_grid_size=self.x_grid_size,
                             y_grid_size=self.y_grid_size,
                             **viz_kwargs)
+        plt.show()
 
 
 if __name__ == '__main__':
-    farm = WindFarm(5, 5000, 5000)
-    farm.sample_layout(10)
+    farm = WindFarm(30, 3000, 3000)
     farm.update_graph(12, 90)
+    farm.visualize_farm()
     g, u = farm.observe()
 
     print(g, u)

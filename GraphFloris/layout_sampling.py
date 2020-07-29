@@ -1,38 +1,11 @@
-# Windows doesn't work with 'signal' package, so implement using multiprocessing
-from multiprocessing import Process, Queue
+# Windows doesn't work with 'signal' package, so implement using difference of runtime
+from datetime import timedelta, datetime
 
 import numpy as np
 
 
-def timeout(seconds=5, action=None):
-    """Calls any function with timeout after 'seconds'.
-       If a timeout occurs, 'action' will be returned or called if
-       it is a function-like object.
-    """
-
-    def handler(queue, func, args, kwargs):
-        queue.put(func(*args, **kwargs))
-
-    def decorator(func):
-
-        def wraps(*args, **kwargs):
-            q = Queue()
-            p = Process(target=handler, args=(q, func, args, kwargs))
-            p.start()
-            p.join(timeout=seconds)
-            if p.is_alive():
-                p.terminate()
-                p.join()
-                if hasattr(action, '__call__'):
-                    return action()
-                else:
-                    return action
-            else:
-                return q.get()
-
-        return wraps
-
-    return decorator
+class TimeoutError(Exception):
+    pass
 
 
 def valid_layout(x_coords, y_coords, min_dist):
@@ -82,12 +55,16 @@ def sequential_sampling(x_grid_size, y_grid_size, min_dist, num_turbines, max_re
                 return valid
         return valid
 
-    @timeout(100)
     def sampling():
+        # we choose to use following 'timeout procedure' to support windows
+        endtime = datetime.utcnow() + timedelta(seconds=2)
+
         turbine_x_coords = []
         turbine_y_coords = []
 
         while len(turbine_x_coords) < num_turbines:
+            if datetime.utcnow() > endtime:
+                raise TimeoutError
             x = np.random.uniform(low=0.0, high=x_grid_size)
             y = np.random.uniform(low=0.0, high=y_grid_size)
             if len(turbine_x_coords) == 0:
@@ -97,16 +74,16 @@ def sequential_sampling(x_grid_size, y_grid_size, min_dist, num_turbines, max_re
                     continue
             turbine_x_coords.append(x)
             turbine_y_coords.append(y)
-            print("len", len(turbine_x_coords))
+
         return turbine_x_coords, turbine_y_coords
 
     success = False
     for i in range(max_retry):
-        print(i)
         try:
             turbine_x_coords, turbine_y_coords = sampling()
             success = True
-        except:
+            break
+        except TimeoutError:
             pass
 
     if not success:
