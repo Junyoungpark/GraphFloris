@@ -6,7 +6,7 @@ with open('README.md', encoding='utf-8') as f:
 
 setup(
     name='GraphFloris',
-    version='0.12',
+    version='0.13',
     long_description=long_description,
     long_description_content_type='text/markdown',
     description='Graph represented wind farm power simulator',

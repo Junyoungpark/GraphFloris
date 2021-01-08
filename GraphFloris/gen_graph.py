@@ -33,7 +33,7 @@ def update_edges(g, wind_direction, influence_angle_th, influence_dist_th):
         dist = torch.norm(torch.cat([src_x - dst_x, src_y - dst_y], dim=-1), dim=-1, keepdim=True)
         return {'dist': dist}
 
-    g.apply_edges(func=compute_euclidean_dist, inplace=True)
+    g.apply_edges(func=compute_euclidean_dist)
 
     # compute 'is-in-influential region'
     def compute_is_influential(edges):

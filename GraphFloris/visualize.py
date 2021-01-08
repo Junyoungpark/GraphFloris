@@ -86,7 +86,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
 
     if show_color_bar_label:
         cbar.set_label('Power', fontsize=label_size)
-    cbar.set_clim(0.0, 1.0)
+    cbar.mappable.set_clim(0.0, 1.0)
     cbar.ax.tick_params(labelsize=tick_size)
 
     for i, (x, y) in enumerate(zip(g.ndata['x'], g.ndata['y'])):
