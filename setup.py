@@ -1,12 +1,11 @@
 from setuptools import setup, find_packages
 
-
 with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
     name='GraphFloris',
-    version='0.14',
+    version='0.15',
     long_description=long_description,
     long_description_content_type='text/markdown',
     description='Graph represented wind farm power simulator',
