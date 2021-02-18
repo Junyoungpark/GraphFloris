@@ -109,13 +109,16 @@ class WindFarm:
         for k in self.g.edata.keys():
             g.edata[k] = self.g.edata[k]
 
+        # setup node/edge attributes
+        n = g.number_of_nodes()
+        g.ndata['wind_speed'] = torch.ones(n, 1) * self.wind_speed
+
         # setup features for regression models
         # this selection of node and edge features was investigated in the paper
         # 'Physics-Induced Graph Neural Network: An Application to wind-farm power prediction'
         # https://www.sciencedirect.com/science/article/pii/S0360544219315555
 
         # node feature
-        n = g.number_of_nodes()
         g.ndata['feat'] = torch.ones(n, 1) * self.wind_speed
 
         # edge feature
