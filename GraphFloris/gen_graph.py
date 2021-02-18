@@ -4,7 +4,7 @@ import torch
 
 
 def get_node_only_graph(xs, ys):
-    g = dgl.DGLGraph()
+    g = dgl.graph(data=([], []), num_nodes=0)  # an empty graph
     num_nodes = len(xs)
 
     g.add_nodes(num_nodes, {'x': torch.tensor(xs).view(-1, 1),

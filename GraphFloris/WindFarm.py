@@ -1,6 +1,5 @@
 from typing import List
 
-import dgl
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -100,14 +99,17 @@ class WindFarm:
         self.wind_direction = wind_direction
 
     def observe(self):
-        g = dgl.DGLGraph(self.g)  # copy structure of wind farm DGLGraph
+        # No need to copy the graph!
+        # g = dgl.DGLGraph(self.g)  # copy structure of wind farm DGLGraph
 
-        # setup internal node features and edge features
-        for k in self.g.ndata.keys():
-            g.ndata[k] = self.g.ndata[k]
+        # # setup internal node features and edge features
+        # for k in self.g.ndata.keys():
+        #     g.ndata[k] = self.g.ndata[k]
+        #
+        # for k in self.g.edata.keys():
+        #     g.edata[k] = self.g.edata[k]
 
-        for k in self.g.edata.keys():
-            g.edata[k] = self.g.edata[k]
+        g = self.g
 
         # setup node/edge attributes
         n = g.number_of_nodes()
