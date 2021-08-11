@@ -11,6 +11,7 @@ from matplotlib.patches import Wedge
 
 def visualize_wind_farm(g: dgl.DGLGraph,
                         min_distance: float,
+                        cutoff_dist: float,
                         angle_threshold: float,
                         wind_direction: float,
                         wind_speed: float,
@@ -26,7 +27,8 @@ def visualize_wind_farm(g: dgl.DGLGraph,
                         annotation_size=12,
                         show_color_bar_label=False,
                         edge_width=2.0,
-                        legend_size=15):
+                        legend_size=15,
+                        draw_wedges=True):
     # Figure drawing parameters
     influential_region_zorder = -1
     min_distance_region_zorder = 0
@@ -109,15 +111,17 @@ def visualize_wind_farm(g: dgl.DGLGraph,
         ax.add_artist(circle)
 
         # Add influential cones
-        wedge = Wedge(
-            (x, y),
-            np.sqrt(x_grid_size ** 2 + y_grid_size ** 2),  # radius
-            270 - wind_direction - angle_threshold,
-            # from theta 1 (in degrees) # FLORIS 1.4 measures 270 degree as left
-            270 - wind_direction + angle_threshold,  # to theta 2 (in degrees)
-            color='g', alpha=0.05,
-            zorder=influential_region_zorder)
-        ax.add_patch(wedge)
+        wedge = None 
+        if draw_wedges:
+            wedge = Wedge(
+                (float(x), float(y)),
+                cutoff_dist, # np.sqrt(x_grid_size ** 2 + y_grid_size ** 2),  # radius
+                270 - wind_direction - angle_threshold,
+                # from theta 1 (in degrees) # FLORIS 1.4 measures 270 degree as left
+                270 - wind_direction + angle_threshold,  # to theta 2 (in degrees)
+                color='g', alpha=0.05,
+                zorder=influential_region_zorder)
+            ax.add_patch(wedge)
 
     # Draw directional mark
     dir_mark_center_x = x_limit * (1 - 2 * dir_mark_margin - dir_mark_len)
@@ -195,7 +199,7 @@ def visualize_wind_farm(g: dgl.DGLGraph,
                  dir_mark_center_y - marker_len * 0.5))
 
     handles, labels = ax.get_legend_handles_labels()
-    handles += [wedge, circle]
+    handles += [wedge, circle] if wedge is not None else [circle]
     labels += ["influential region", "min. distance"]
     ax.legend(handles, labels, prop={'size': legend_size})
 

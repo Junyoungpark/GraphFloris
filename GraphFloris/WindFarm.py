@@ -85,9 +85,10 @@ class WindFarm:
                      dist_cutoff_factor: float = None):
         # update graph
         if xs is not None and ys is not None:  # construct graph
-            self.g = get_node_only_graph(xs, ys)
-            self.xs, self.ys = xs, ys
+            self.xs, self.ys = xs, ys        
+            self._farm.reinitialize_flow_field(layout_array=[self.xs, self.ys])
             self.num_turbines = len(xs)
+            self.g = get_node_only_graph(xs, ys)
         if wind_direction is not None:
             ag_th = self.angle_threshold if angle_threshold is None else angle_threshold
             cutoff_dist = self.cutoff_dist if dist_cutoff_factor is None else dist_cutoff_factor * self.turbine_diameter
@@ -150,6 +151,7 @@ class WindFarm:
         assert self.g is not None, "construct graph first! you can construct wind farm graph with 'update_graph'"
         visualize_wind_farm(g=self.g,
                             min_distance=self.min_distance,
+                            cutoff_dist=self.cutoff_dist,
                             angle_threshold=self.angle_threshold,
                             wind_direction=self.wind_direction,
                             wind_speed=self.wind_speed,
