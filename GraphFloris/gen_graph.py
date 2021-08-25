@@ -63,8 +63,8 @@ def update_edges(g, wind_direction, influence_angle_th, influence_dist_th):
         is_in_influential_cone = is_in_influential_cone1 & is_in_influential_cone2
         is_in_influential_dist = edges.data['dist'] <= influence_dist_th
         is_in_influential_region = is_in_influential_cone & is_in_influential_dist
-        down_stream_dist = torch.abs(tslr_dst_y)
-        radial_dist = torch.abs(tslr_dst_x)
+        down_stream_dist = torch.abs(r_dst_y)
+        radial_dist = torch.abs(r_dst_x)
         return {'is_in_influential_region': is_in_influential_region,
                 'down_stream_dist': down_stream_dist,
                 'radial_dist': radial_dist}
