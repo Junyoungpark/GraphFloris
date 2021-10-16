@@ -19,6 +19,7 @@ class WindFarm:
                  y_grid_size: float = 3000,  # the y size of windfarm is by default 3000m
                  angle_threshold: float = 90.0,  # the angle threshold (degree)
                  min_distance_factor: float = 2.0,  # minimal safety distance factor between two turbines
+                 influence_radius_factor: float = 1.0,  # used to compute cylinder influence of turbine
                  dist_cutoff_factor: float = 50.0):  # maximal influential distance factor between two turbines
         self.num_turbines = num_turbines
         self.x_grid_size = x_grid_size
@@ -28,6 +29,7 @@ class WindFarm:
         self.turbine_diameter = EXAMPLE_FARM['turbine']['properties']['rotor_diameter']
         self.min_distance = min_distance_factor * self.turbine_diameter
         self.cutoff_dist = dist_cutoff_factor * self.turbine_diameter
+        self.influence_radius = influence_radius_factor * self.turbine_diameter
         self._one_turbine_farm = FlorisInterface(input_dict=EXAMPLE_FARM)
         self._farm = FlorisInterface(input_dict=EXAMPLE_FARM)
 
@@ -48,11 +50,13 @@ class WindFarm:
     def sample_layout(self,
                       num_turbines: int,
                       x_grid_size: float = None,
-                      y_grid_size: float = None):
+                      y_grid_size: float = None,
+                      seed=None):
         num_turbines = self.num_turbines if num_turbines is None else num_turbines
         x_grid_size = self.x_grid_size if x_grid_size is None else x_grid_size
         y_grid_size = self.y_grid_size if y_grid_size is None else y_grid_size
 
+        np.random.seed(seed)
         self.xs, self.ys = sequential_sampling(x_grid_size=x_grid_size,
                                                y_grid_size=y_grid_size,
                                                min_dist=self.min_distance,
@@ -85,13 +89,16 @@ class WindFarm:
                      dist_cutoff_factor: float = None):
         # update graph
         if xs is not None and ys is not None:  # construct graph
-            self.g = get_node_only_graph(xs, ys)
-            self.xs, self.ys = xs, ys
+            self.xs, self.ys = xs, ys        
+            self._farm.reinitialize_flow_field(layout_array=[self.xs, self.ys])
             self.num_turbines = len(xs)
+            self.g = get_node_only_graph(xs, ys)
         if wind_direction is not None:
             ag_th = self.angle_threshold if angle_threshold is None else angle_threshold
+            self.angle_threshold = ag_th
             cutoff_dist = self.cutoff_dist if dist_cutoff_factor is None else dist_cutoff_factor * self.turbine_diameter
-            update_edges(self.g, wind_direction, ag_th, cutoff_dist)
+            self.curoff_dist = cutoff_dist
+            update_edges(self.g, wind_direction, ag_th, cutoff_dist, influence_radius=self.influence_radius)
         if wind_speed is not None:
             self.set_power(self.g, wind_speed, wind_direction)
 
@@ -150,13 +157,15 @@ class WindFarm:
         assert self.g is not None, "construct graph first! you can construct wind farm graph with 'update_graph'"
         visualize_wind_farm(g=self.g,
                             min_distance=self.min_distance,
+                            cutoff_dist=self.cutoff_dist,
+                            influence_radius=self.influence_radius,
                             angle_threshold=self.angle_threshold,
                             wind_direction=self.wind_direction,
                             wind_speed=self.wind_speed,
                             x_grid_size=self.x_grid_size,
                             y_grid_size=self.y_grid_size,
                             **viz_kwargs)
-        plt.show()
+        # plt.show()
 
 
 if __name__ == '__main__':

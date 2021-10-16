@@ -12,7 +12,7 @@ def get_node_only_graph(xs, ys):
     return g
 
 
-def update_edges(g, wind_direction, influence_angle_th, influence_dist_th):
+def update_edges(g, wind_direction, influence_angle_th, influence_dist, influence_radius=0):
     # generate all possible edges and delete edges by conditions
 
     u, v = [], []
@@ -54,17 +54,22 @@ def update_edges(g, wind_direction, influence_angle_th, influence_dist_th):
         R = torch.tensor(R).float()  # [2, 2]
         tslr_xy = torch.cat([tslr_dst_x, tslr_dst_y], dim=1)
         rotated_dst_xy = torch.einsum('ij, bj -> bi', R, tslr_xy)
-        r_dst_x, r_dst_y = rotated_dst_xy.split(1, dim=1)
+        r_dst_x, r_dst_y = rotated_dst_xy.split(1, dim=1)  # WARNING: radial is x and down-stream is y
 
         a = np.abs(round(np.tan(np.radians(90 - influence_angle_th)), 10))
 
         is_in_influential_cone1 = (r_dst_y <= a * r_dst_x)
         is_in_influential_cone2 = (r_dst_y <= -a * r_dst_x)
         is_in_influential_cone = is_in_influential_cone1 & is_in_influential_cone2
-        is_in_influential_dist = edges.data['dist'] <= influence_dist_th
-        is_in_influential_region = is_in_influential_cone & is_in_influential_dist
-        down_stream_dist = torch.abs(tslr_dst_y)
-        radial_dist = torch.abs(tslr_dst_x)
+        is_in_influential_cylinder = (torch.abs(r_dst_x) <= influence_radius) & (r_dst_y < 0)  # close to axis and downstream
+        is_in_influential_dist = edges.data['dist'] <= influence_dist
+        is_in_influential_region = (is_in_influential_cone | is_in_influential_cylinder) & is_in_influential_dist
+        # Absolute distances
+        # down_stream_dist = torch.abs(r_dst_y)
+        # radial_dist = torch.abs(r_dst_x)
+        # Removing absolute values
+        down_stream_dist = -r_dst_y
+        radial_dist = -r_dst_x
         return {'is_in_influential_region': is_in_influential_region,
                 'down_stream_dist': down_stream_dist,
                 'radial_dist': radial_dist}
